@@ -1,0 +1,37 @@
+/* Form.module.css */
+.chakra-input {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem;
+    width: 100%;
+  }
+  
+  .chakra-datepicker {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    width: 100%;
+  }
+  
+  .chakra-datepicker-popover {
+    z-index: 1000; /* Ensure it appears on top */
+  }
+  
+  .react-datepicker-wrapper {
+    display: flex;
+    align-items: center;
+  }
+  
+  .react-datepicker__input-container {
+    width: 100%;
+  }
+  
+  .main {
+    padding-top: 5%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    width: 80%; 
+    max-width: 800px; 
+  }
+  
