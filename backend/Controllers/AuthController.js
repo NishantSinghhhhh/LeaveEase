@@ -1,33 +1,76 @@
-const UserModel = require("../Models/User")
+const UserModel = require("../Models/User");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const signup = async(req, res) =>{
-    try{
-        const {name, email, password} = req.body;
-        const user = await UserModel.findOne({email});
-        if(user){
-            return res.status(409)
-                    .json({message: `User already exists`, success: false});
-        }
-        const userModel = new UserModel({name, email, password});
-        userModel.password = await bcrypt.hash(password, 10);
-        await UserModel.save();
-        res.status(201)
-            .json({
-                message: "SignUp Successfully",
-                success: true
-            })
-    }
-    catch(err){
-        res.status(500)
-            .json({
-                message: "Internal server error",
-                success: false
-            })
+const signup = async (req, res) => {
+    try {
+        const { 
+            name, 
+            email, 
+            password, 
+            branch, 
+            year, 
+            class: userClass, 
+            rollNumber, 
+            registrationNumber,
+            fatherName, 
+            fatherPhoneNumber,
+            classTeacherName 
+        } = req.body;
 
+        // Validate required fields
+        if (!name || !email || !password || !branch || !year || !userClass || !rollNumber || !registrationNumber || !fatherName || !fatherPhoneNumber || !classTeacherName) {
+            return res.status(400).json({
+                message: 'All fields are required',
+                success: false
+            });
+        }
+
+        // Check if the user already exists
+        const existingUser = await UserModel.findOne({ email });
+        if (existingUser) {
+            return res.status(409).json({
+                message: 'User already exists',
+                success: false
+            });
+        }
+
+        // Create a new user instance
+        const userModel = new UserModel({
+            name,
+            email,
+            password,
+            branch,
+            year,
+            class: userClass,
+            rollNumber,
+            registrationNumber,
+            fatherName,
+            fatherPhoneNumber,
+            classTeacherName
+        });
+
+        // Hash the password
+        userModel.password = await bcrypt.hash(password, 10);
+
+        // Save the new user to the database
+        await userModel.save();
+
+        res.status(201).json({
+            message: 'SignUp Successful',
+            success: true
+        });
+    } catch (err) {
+        console.error(err); // Log the error to the server console for debugging
+        res.status(500).json({
+            message: 'Internal server error',
+            success: false
+        });
     }
-}
+};
+
+module.exports = signup;
+
 
 const login = async(req, res) =>{
     try{
