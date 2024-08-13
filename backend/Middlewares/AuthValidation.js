@@ -26,20 +26,23 @@ const signupValidation = (req, res, next) => {
     next();
 };
 
-
 const loginValidation = (req, res, next) => {
     const schema = Joi.object({
-        email: Joi.string().email().required(), // Corrected
+        email: Joi.string().email().required(),
         password: Joi.string().min(4).max(100).required(),
+        // Add conditional validation for registrationNumber or staffId based on role
+        registrationNumber: Joi.string().when('$isStudent', { is: true, then: Joi.required() }),
+        staffId: Joi.string().when('$isStudent', { is: false, then: Joi.required() })
     });
 
-    const { error } = schema.validate(req.body);
+    const { error } = schema.validate(req.body, { context: { isStudent: req.body.isStudent } });
 
     if (error) {
         return res.status(400).json({ message: "Bad Request", error: error.details });
     }
     next();
-}
+};
+
 
 module.exports = {
     signupValidation,

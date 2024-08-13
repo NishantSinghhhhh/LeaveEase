@@ -139,7 +139,7 @@ const Register = () => {
       if (success) {
         handleSuccess(message);
         setTimeout(() => {
-          navigate('/login'); // Navigate to login page on successful signup
+          navigate('/'); // Navigate to login page on successful signup
         }, 1000);
       } else if (error) {
         const details = error?.details[0]?.message || 'An error occurred';

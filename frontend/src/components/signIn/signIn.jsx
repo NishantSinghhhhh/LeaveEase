@@ -8,13 +8,21 @@ import {
   Button,
   Text,
   Stack,
-  Box
+  useToast
 } from '@chakra-ui/react';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './signIn.module.css';
-import { Link } from 'react-router-dom';
 
 const SignInCard = () => {
   const [isStudent, setIsStudent] = useState(true);
+  const [loginInfo, setLoginInfo] = useState({
+    email: '',
+    password: '',
+    registrationNumber: '',
+    staffId: ''
+  });
+  const navigate = useNavigate();
+  const toast = useToast();
 
   const handleStudentClick = () => {
     setIsStudent(true);
@@ -22,6 +30,88 @@ const SignInCard = () => {
 
   const handleStaffClick = () => {
     setIsStudent(false);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setLoginInfo(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const { email, password, registrationNumber, staffId } = loginInfo;
+    
+    // Ensure required fields are filled
+    if (!email || !password || (isStudent && !registrationNumber) || (!isStudent && !staffId)) {
+      return handleError('All fields are required');
+    }
+
+    try {
+      const url = `http://localhost:8000/auth/login`;
+      console.log('Sending request with:', {
+        email,
+        password,
+        ...(isStudent ? { registrationNumber } : { staffId })
+      });
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          ...(isStudent ? { registrationNumber } : { staffId })
+        })
+      });
+
+      const result = await response.json();
+      console.log('API response:', result);
+
+      const { success, message, jwtToken, name, error } = result;
+
+      if (success) {
+        handleSuccess(message);
+        localStorage.setItem('token', jwtToken);
+        localStorage.setItem('loggedInUser', name);
+        setTimeout(() => {
+          navigate('/home');
+        }, 1000);
+      } else if (error) {
+        const details = error?.details[0]?.message;
+        handleError(details || message);
+      } else {
+        handleError(message);
+      }
+    } catch (err) {
+      handleError(err.message || 'An unexpected error occurred');
+    }
+  };
+
+  const handleError = (message) => {
+    console.error(message);
+    toast({
+      title: "Login Failed",
+      description: message,
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+    });
+  };
+
+  const handleSuccess = (message) => {
+    console.log(message);
+    toast({
+      title: "Login Successful",
+      description: message,
+      status: "success",
+      duration: 5000,
+      isClosable: true,
+    });
   };
 
   return (
@@ -61,43 +151,60 @@ const SignInCard = () => {
                 Sign In as Staff
               </Button>
             </Stack>
-            {isStudent ? (
-              <>
-                <FormControl id='email'>
-                  <FormLabel>Registration Number</FormLabel>
-                  <Input type='text' placeholder='Enter your Registration Number' />
-                </FormControl>
-                <FormControl id='password'>
-                  <FormLabel>Password</FormLabel>
-                  <Input type='password' placeholder='Enter your password' />
-                </FormControl>
-              </>
-            ) : (
-              <>
-                <FormControl id='staff-id'>
-                  <FormLabel>Staff ID</FormLabel>
-                  <Input type='text' placeholder='Enter your staff ID' />
-                </FormControl>
-                <FormControl id='password'>
-                  <FormLabel>Password</FormLabel>
-                  <Input type='password' placeholder='Enter your password' />
-                </FormControl>
-              </>
-            )}
-            <Link to="/Register">
-            <Button
-                colorScheme='gray'
-                variant='solid'
-                color='gray.600'
-                borderColor='gray.600'
-                mt={4}
-                width='full'
-              >
-                Register Here
-              </Button>
-            </Link>
-            <Link to="/Home">
+            <form onSubmit={handleLogin}>
+              <FormControl id='email'>
+                <FormLabel>Email</FormLabel>
+                <Input
+                  type='email'
+                  name='email'
+                  placeholder='Enter your email'
+                  value={loginInfo.email}
+                  onChange={handleChange}
+                  required
+                />
+              </FormControl>
+              {isStudent ? (
+                <>
+                  <FormControl id='registrationNumber'>
+                    <FormLabel>Registration Number</FormLabel>
+                    <Input
+                      type='text'
+                      name='registrationNumber'
+                      placeholder='Enter your Registration Number'
+                      value={loginInfo.registrationNumber}
+                      onChange={handleChange}
+                      required
+                    />
+                  </FormControl>
+                </>
+              ) : (
+                <>
+                  <FormControl id='staffId'>
+                    <FormLabel>Staff ID</FormLabel>
+                    <Input
+                      type='text'
+                      name='staffId'
+                      placeholder='Enter your staff ID'
+                      value={loginInfo.staffId}
+                      onChange={handleChange}
+                      required
+                    />
+                  </FormControl>
+                </>
+              )}
+              <FormControl id='password'>
+                <FormLabel>Password</FormLabel>
+                <Input
+                  type='password'
+                  name='password'
+                  placeholder='Enter your password'
+                  value={loginInfo.password}
+                  onChange={handleChange}
+                  required
+                />
+              </FormControl>
               <Button
+                type='submit'
                 colorScheme='gray'
                 variant='solid'
                 color='gray.600'
@@ -106,6 +213,18 @@ const SignInCard = () => {
                 width='full'
               >
                 Submit
+              </Button>
+            </form>
+            <Link to="/Register">
+              <Button
+                colorScheme='gray'
+                variant='solid'
+                color='gray.600'
+                borderColor='gray.600'
+                mt={4}
+                width='full'
+              >
+                Register Here
               </Button>
             </Link>
           </Stack>
